@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Everything You Want - 資源共享平台</title>
+    <style>
+        :root {
+            --primary: #26A69A; /* 溫暖的藍綠色，代表健康與護理 */
+            --primary-light: #E0F2F1;
+            --secondary: #FF7043; /* 活力橘，用於強調媒合 */
+            --text-main: #37474F;
+            --text-light: #78909C;
+            --bg: #FAFAFA;
+            --card-bg: #FFFFFF;
+            --wish-color: #42A5F5;
+            --give-color: #66BB6A;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* 頂部導航 */
+        header {
+            background: linear-gradient(135deg, var(--primary), #00897B);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 { margin: 0; font-size: 2.5rem; letter-spacing: 2px; }
+        .slogan { font-size: 1.1rem; opacity: 0.9; margin-top: 10px; font-weight: 300; }
+        .tags { margin-top: 15px; font-size: 0.9rem; }
+        .tag { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; margin: 0 3px; }
+
+        /* 容器 */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 規則與簡介區 */
+        .intro-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 6px solid var(--secondary);
+        }
+        .intro-title { font-weight: bold; color: var(--primary); display: flex; align-items: center; cursor: pointer; }
+        .intro-content { margin-top: 10px; font-size: 0.95rem; color: var(--text-main); display: none; }
+        .intro-content.show { display: block; animation: fadeIn 0.5s; }
+
+        /* 互動控制區 */
+        .action-area {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+        .btn-wish { background-color: white; color: var(--wish-color); border: 2px solid var(--wish-color); }
+        .btn-wish.active, .btn-wish:hover { background-color: var(--wish-color); color: white; }
+        
+        .btn-give { background-color: white; color: var(--give-color); border: 2px solid var(--give-color); }
+        .btn-give.active, .btn-give:hover { background-color: var(--give-color); color: white; }
+
+        /* 貼文輸入區 */
+        #postFormSection {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: none;
+            animation: slideDown 0.4s ease-out;
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-light); }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #EEE;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        .form-input:focus { outline: none; border-color: var(--primary); }
+        .form-tip { font-size: 0.8rem; color: #999; margin-top: 5px; }
+
+        /* 兩欄佈局 */
+        .feed-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        @media (max-width: 768px) { .feed-container { grid-template-columns: 1fr; } }
+
+        .column-header {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #EEE;
+        }
+        .wish-header { border-color: var(--wish-color); color: var(--wish-color); }
+        .give-header { border-color: var(--give-color); color: var(--give-color); }
+
+        /* 卡片設計 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: relative;
+            transition: transform 0.2s;
+            border-top: 5px solid transparent;
+        }
+        .card:hover { transform: translateY(-2px); }
+        .card-wish { border-top-color: var(--wish-color); }
+        .card-give { border-top-color: var(--give-color); }
+
+        .card-meta { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-light); margin-bottom: 10px; }
+        .card-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 8px; color: var(--text-main); }
+        .card-desc { font-size: 1rem; margin-bottom: 15px; white-space: pre-wrap; }
+        .card-footer { border-top: 1px solid #EEE; padding-top: 12px; margin-top: 10px; }
+        
+        .match-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .match-btn:hover { background-color: #00897B; }
+
+        .comment-section {
+            margin-top: 10px;
+            background: #F5F5F5;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+        .comment-input { width: 70%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .comment-submit { width: 25%; padding: 8px; background: var(--text-light); color: white; border: none; border-radius: 4px; cursor: pointer; }
+
+        /* 管理員刪除按鈕 */
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #FFEBEE;
+            color: #D32F2F;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: none; /* 預設隱藏 */
+        }
+
+        /* 特效與動畫 */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* 慶祝 Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .match-modal {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        
+        .admin-login {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            opacity: 0.3;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>get everything you want</h1>
+    <div class="slogan">Buy nothing, but get everything you want.<br>誠心許下你的願望，也樂於回應他/她的需求！</div>
+    <div class="tags">
+        <span class="tag">#免費</span>
+        <span class="tag">#共享</span>
+        <span class="tag">#互利</span>
+        <span class="tag">#有益健康</span>
+        <span class="tag">#禮物經濟</span>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- 守則區 -->
+    <div class="intro-card">
+        <div class="intro-title" onclick="toggleIntro()">
+            <span>📖 平台使用守則與默契 (點擊展開)</span>
+        </div>
+        <div class="intro-content" id="introContent">
+            <p><strong>默契：</strong>本平台不花錢、不用交換、不論等值。可以是二手物但須品質佳。<strong>嚴禁有安全或衛生疑慮者！</strong></p>
+            <ol>
+                <li><strong>實名制：</strong>貼文留言一律附上真實姓名 (班級/學號/姓名)。</li>
+                <li><strong>單一物件：</strong>一次貼文限填寫一個物件或服務。</li>
+                <li><strong>善良風俗：</strong>內容不得違害善良風俗，且必須有益健康。</li>
+                <li><strong>主動接洽：</strong>若可回應願望，請主動留言。</li>
+                <li><strong>無金錢交易：</strong>所有媒合不得涉及金錢，純粹互助與惜福。</li>
+            </ol>
+            <p style="color: #D32F2F; font-size: 0.9rem;">⚠️ 管理員有權刪除任何不當貼文。</p>
+        </div>
+    </div>
+
+    <!-- 操作區 -->
+    <div class="action-area">
+        <button class="btn btn-wish" onclick="showForm('wish')">🙏 我要許願 (許願池)</button>
+        <button class="btn btn-give" onclick="showForm('give')">🎁 我要貢獻 (益福田)</button>
+    </div>
+
+    <!-- 輸入表單 -->
+    <section id="postFormSection">
+        <h2 id="formTitle" style="text-align: center; margin-top: 0;"></h2>
+        <div class="form-group">
+            <label class="form-label">您的身份 (班級 / 學號 / 姓名)</label>
+            <input type="text" id="userName" class="form-input" placeholder="例如：三年二班 25號 李大仁">
+        </div>
+        <div class="form-group">
+            <label class="form-label" id="itemNameLabel">物件/服務名稱</label>
+            <input type="text" id="itemName" class="form-input" placeholder="請清楚標示名稱">
+        </div>
+        <div class="form-group">
+            <label class="form-label" id="reasonLabel">需求程度與理由 / 貢獻緣由</label>
+            <textarea id="itemDesc" class="form-input" rows="3" placeholder="請詳述..."></textarea>
+            <div class="form-tip">※ 請確保內容健康、無安全疑慮。</div>
+        </div>
+        <div style="text-align: center;">
+            <button class="btn" style="background:var(--primary); color:white; width: 100%; justify-content: center;" onclick="submitPost()">發布貼文</button>
+            <button class="btn" style="background:transparent; color:#666; font-size:0.9rem; margin-top:10px;" onclick="document.getElementById('postFormSection').style.display='none'">取消</button>
+        </div>
+    </section>
+
+    <!-- 內容流 -->
+    <div class="feed-container">
+        <div>
+            <div class="column-header wish-header">🙏 許願池</div>
+            <div id="wishFeed">
+                <!-- 願望貼文將顯示於此 -->
+            </div>
+        </div>
+        <div>
+            <div class="column-header give-header">🎁 益福田</div>
+            <div id="giveFeed">
+                <!-- 貢獻貼文將顯示於此 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 媒合成功特效 Modal -->
+<div class="modal-overlay" id="matchModal">
+    <div class="match-modal">
+        <h2 style="color: var(--secondary);">🎉 媒合接洽中！</h2>
+        <p style="font-size: 1.2rem; margin: 20px 0;">感謝您的善意！</p>
+        <p style="color: #666;">請在貼文下方留言約定細節。</p>
+        <p style="font-size: 0.9rem; color: #999;">(記得：注意禮貌與安全)</p>
+        <button class="btn" style="background: var(--primary); color: white; margin: 0 auto;" onclick="closeModal()">好的，我知道了！</button>
+    </div>
+</div>
+
+<!-- 模擬後端：Canvas Confetti (慶祝碎紙花) -->
+<canvas id="confetti" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999; display:none;"></canvas>
+
+<!-- 管理員入口 -->
+<div class="admin-login" onclick="adminLogin()">Admin</div>
+
+<script>
+    // 模擬資料庫
+    let posts = [
+        { id: 1, type: 'wish', name: '護理科二年級 5號 林小美', item: '解剖學圖譜(二手)', desc: '最近要考試了，希望能徵求學長姐用不到的圖譜，筆記多沒關係！需求程度：非常緊急！', date: '2023/10/24' },
+        { id: 2, type: 'give', name: '餐飲科一年級 10號 張阿豪', item: '全新環保餐具組', desc: '參加活動拿到的贈品，因為自己已經有了，想送給有需要的人。品質很好，不鏽鋼的。', date: '2023/10/25' }
+    ];
+
+    let currentType = 'wish';
+    let isAdmin = false;
+
+    // 初始化
+    function init() {
+        renderPosts();
+    }
+
+    // 切換守則顯示
+    function toggleIntro() {
+        const content = document.getElementById('introContent');
+        content.classList.toggle('show');
+    }
+
+    // 顯示發文表單
+    function showForm(type) {
+        currentType = type;
+        const section = document.getElementById('postFormSection');
+        const title = document.getElementById('formTitle');
+        const itemLabel = document.getElementById('itemNameLabel');
+        const reasonLabel = document.getElementById('reasonLabel');
+        
+        section.style.display = 'block';
+        section.scrollIntoView({ behavior: 'smooth' });
+
+        if (type === 'wish') {
+            title.innerText = '🙏 許下你的願望';
+            title.style.color = 'var(--wish-color)';
+            itemLabel.innerText = '我需要的物件/服務';
+            reasonLabel.innerText = '需求的程度與理由';
+        } else {
+            title.innerText = '🎁 分享你的善意';
+            title.style.color = 'var(--give-color)';
+            itemLabel.innerText = '我提供的物件/服務';
+            reasonLabel.innerText = '物件狀況與貢獻緣由';
+        }
+    }
+
+    // 提交貼文
+    function submitPost() {
+        const name = document.getElementById('userName').value;
+        const item = document.getElementById('itemName').value;
+        const desc = document.getElementById('itemDesc').value;
+
+        if (!name || !item || !desc) {
+            alert("請完整填寫所有欄位，這是我們的默契喔！");
+            return;
+        }
+
+        // 簡單的資料驗證
+        if (!name.includes("班") && !name.includes("號")) {
+            if(!confirm("提醒：您的名字格式似乎不包含班級或座號，確定要發布嗎？建議符合格式以便大家認識您。")) return;
+        }
+
+        const newPost = {
+            id: Date.now(),
+            type: currentType,
+            name: name,
+            item: item,
+            desc: desc,
+            date: new Date().toLocaleDateString()
+        };
+
+        posts.unshift(newPost); // 加到最前面
+        renderPosts();
+        
+        // 重置並隱藏表單
+        document.getElementById('userName').value = '';
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemDesc').value = '';
+        document.getElementById('postFormSection').style.display = 'none';
+
+        alert("貼文發布成功！");
+    }
+
+    // 渲染貼文
+    function renderPosts() {
+        const wishContainer = document.getElementById('wishFeed');
+        const giveContainer = document.getElementById('giveFeed');
+        
+        wishContainer.innerHTML = '';
+        giveContainer.innerHTML = '';
+
+        posts.forEach(post => {
+            const card = document.createElement('div');
+            card.className = `card card-${post.type}`;
+            
+            const btnText = post.type === 'wish' ? '🙋 我可以提供幫助' : '🙋 我需要這個';
+            const deleteBtn = isAdmin ? `<button class="delete-btn" style="display:block" onclick="deletePost(${post.id})">刪除</button>` : '';
+
+            card.innerHTML = `
+                ${deleteBtn}
+                <div class="card-meta">
+                    <span>👤 ${post.name}</span>
+                    <span>📅 ${post.date}</span>
+                </div>
+                <div class="card-title">${post.type === 'wish' ? '🙏' : '🎁'} ${post.item}</div>
+                <div class="card-desc">${post.desc}</div>
+                <div class="card-footer">
+                    <button class="match-btn" onclick="triggerMatch(this)">${btnText}</button>
+                    <div class="comment-section">
+                        <p style="margin:5px 0; font-size:0.9rem;"><strong>系統：</strong>請在此留下您的聯絡方式或約定交貨地點。</p>
+                        <input type="text" class="comment-input" placeholder="留言...">
+                        <button class="comment-submit" onclick="alert('留言功能模擬成功！實作需後端支援。')">送出</button>
+                    </div>
+                </div>
+            `;
+
+            if (post.type === 'wish') {
+                wishContainer.appendChild(card);
+            } else {
+                giveContainer.appendChild(card);
+            }
+        });
+    }
+
+    // 觸發媒合特效
+    function triggerMatch(btn) {
+        // 顯示留言區
+        const commentSection = btn.nextElementSibling;
+        commentSection.style.display = 'block';
+        btn.style.display = 'none'; // 隱藏按鈕避免重複點擊
+
+        // 顯示 Modal
+        document.getElementById('matchModal').style.display = 'flex';
+        
+        // 發射彩帶
+        startConfetti();
+    }
+
+    function closeModal() {
+        document.getElementById('matchModal').style.display = 'none';
+        stopConfetti();
+    }
+
+    // 管理員登入模擬
+    function adminLogin() {
+        const pwd = prompt("請輸入管理員密碼：");
+        if (pwd === "admin888") { // 預設密碼
+            isAdmin = true;
+            alert("管理員模式已啟動。您可以刪除貼文。");
+            renderPosts();
+        } else {
+            alert("密碼錯誤");
+        }
+    }
+
+    function deletePost(id) {
+        if(confirm("確定要刪除此貼文嗎？")) {
+            posts = posts.filter(p => p.id !== id);
+            renderPosts();
+        }
+    }
+
+    // --- 簡易 Confetti 特效 (Canvas) ---
+    // 這裡內嵌一個輕量的彩帶效果程式碼
+    const canvas = document.getElementById("confetti");
+    const ctx = canvas.getContext("2d");
+    let confettiActive = false;
+    let particles = [];
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function startConfetti() {
+        canvas.style.display = 'block';
+        confettiActive = true;
+        particles = [];
+        for(let i=0; i<100; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                color: ['#FF7043', '#26A69A', '#FFD54F', '#42A5F5'][Math.floor(Math.random()*4)],
+                size: Math.random() * 10 + 5,
+                speed: Math.random() * 5 + 2,
+                angle: Math.random() * 360
+            });
+        }
+        requestAnimationFrame(loopConfetti);
+    }
+
+    function stopConfetti() {
+        confettiActive = false;
+        setTimeout(() => { canvas.style.display = 'none'; }, 100);
+    }
+
+    function loopConfetti() {
+        if (!confettiActive) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            p.y += p.speed;
+            p.angle += 2;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.angle * Math.PI / 180);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+            ctx.restore();
+            if (p.y > canvas.height) p.y = -20;
+        });
+        requestAnimationFrame(loopConfetti);
+    }
+
+    // 啟動
+    init();
+
+</script>
+</body>
+</html>
